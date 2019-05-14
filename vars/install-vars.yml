@@ -1,0 +1,22 @@
+---
+    # Overcloud Admin User. Can be typically found inside overcloudrc file
+    cloud_admin: admin
+    # Overcloud Admin User password. Can be typically found inside overcloudrc file
+    admin_password: kK49nsTbBwsHPetYEVTWbQcGE
+    # Overcloud Admin Tenant. Can be typically found inside overcloudrc file
+    admin_project: admin
+    # Overcloud public keystone endpoint. Can be typically found inside overcloudrc file
+    os_auth: http://172.17.5.250:5000//v3
+    # Demo project
+    demo_project: Tuan-fun
+    # Overcloud domains
+    project_domain_name: Default
+    user_domain_name: Default
+    # Overcloud default region
+    region_name: regionOne
+    # Default security group
+    sec_group: 3c56a50f-1dfa-489e-b816-1b894f84d2c9
+    # Test Floating IP based on external net
+    floating_ip: 172.16.0.71
+    # Test port
+    test_port: testport

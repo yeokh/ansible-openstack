@@ -1,0 +1,121 @@
+---
+
+- name: Execute the Ansible Openstack demo tasks
+  hosts: localhost
+  vars_files:
+    - vars/install-vars.yml
+  tasks:
+  - name: Create the test network
+    os_network:
+      auth:
+         auth_url: "{{ os_auth }}"
+         username: "{{ cloud_admin }}"
+         password: "{{ admin_password }}"
+         project_name: "{{ demo_project }}"
+         project_domain_name: "{{ project_domain_name }}"
+         user_domain_name: "{{ user_domain_name }}"
+      state: present
+      name: testnet1
+      external: False
+      shared: False
+      wait: yes
+    register: testnet_network
+
+  - name: Create the test subnet
+    os_subnet:
+      auth:
+         auth_url: "{{ os_auth }}"
+         username: "{{ cloud_admin }}"
+         password: "{{ admin_password }}"
+         project_name: "{{ demo_project }}"
+         project_domain_name: "{{ project_domain_name }}"
+         user_domain_name: "{{ user_domain_name }}"
+      state: present
+      network_name: "{{ testnet_network.id }}"
+      name: testnet_sub
+      ip_version: 4
+      cidr: 192.168.1.0/24
+      gateway_ip: 192.168.1.1
+      enable_dhcp: yes
+      dns_nameservers:
+        - 8.8.8.8
+    register: testnet_sub
+
+  - name: Create the test router
+    ignore_errors: yes #for some reasons, re-running this task gives errors
+    os_router:
+      auth:
+         auth_url: "{{ os_auth }}"
+         username: "{{ cloud_admin }}"
+         password: "{{ admin_password }}"
+         project_name: "{{ demo_project }}"
+         project_domain_name: "{{ project_domain_name }}"
+         user_domain_name: "{{ user_domain_name }}"
+      region_name: "{{ region_name }}"
+      enable_snat: yes
+      state: present
+      name: testnet_router
+      network: external
+      interfaces:
+        - testnet_sub
+
+  - name: Create test port
+    os_port:
+      auth:
+        auth_url: "{{ os_auth }}"
+        username: "{{ cloud_admin }}"
+        password: "{{ admin_password }}"
+        project_name: "{{ demo_project }}"
+        project_domain_name: "{{ project_domain_name }}"
+        user_domain_name: "{{ user_domain_name }}"
+      state: present
+      name: "{{ test_port }}"
+      network: "{{ testnet_network.id }}"
+      # network: testnet
+      security_groups: "{{ sec_group }}"
+    register: testport_port
+
+  # - name: Create a new security group
+  #   os_security_group:
+  #     state: present
+  #     name: secgr
+  
+  # - name: Create a new security group allowing any ICMP
+  #   os_security_group_rule:
+  #     security_group: secgr
+  #     protocol: icmp
+  #     remote_ip_prefix: 0.0.0.0/0
+
+  # - name: Create a new security group allowing any SSH connection
+  #   os_security_group_rule:
+  #     security_group: secgr
+  #     protocol: tcp
+  #     port_range_min: 22
+  #     port_range_max: 22
+  #     remote_ip_prefix: 0.0.0.0/0
+
+
+  - name: Create server instance
+    os_server:
+      auth:
+         auth_url: "{{ os_auth }}"
+         username: "{{ cloud_admin }}"
+         password: "{{ admin_password }}"
+         project_name: "{{ demo_project }}"
+         project_domain_name: "{{ project_domain_name }}"
+         user_domain_name: "{{ user_domain_name }}"
+      state: present
+      name: testServer
+      image: rhel7_ocp
+      flavor: medium
+      security_groups: default
+      key_name: key1
+      nics:
+        # - net-id: "{{ testnet_network.id }}"
+        #- net-id: a39b8f6c-cba2-493e-a777-eed61cabf70a
+        - port-id: "{{ testport_port.id }}"
+      auto_ip: yes
+    register: testServer
+
+  - name: Show Server's IP
+    debug: var=testServer.openstack.public_v4

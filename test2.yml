@@ -1,0 +1,88 @@
+---
+
+- name: Execute the Ansible Openstack demo-scenario2 tasks
+  hosts: localhost
+  vars_files:
+    - vars/install-vars.yml
+  tasks:
+  - name: Delete test port
+    os_port:
+      auth:
+        auth_url: "{{ os_auth }}"
+        username: "{{ cloud_admin }}"
+        password: "{{ admin_password }}"
+        project_name: "{{ demo_project }}"
+        project_domain_name: "{{ project_domain_name }}"
+        user_domain_name: "{{ user_domain_name }}"
+      state: absent
+      name: "{{ test_port }}"
+
+  - name: Create the second test network
+    os_network:
+      auth:
+         auth_url: "{{ os_auth }}"
+         username: "{{ cloud_admin }}"
+         password: "{{ admin_password }}"
+         project_name: "{{ demo_project }}"
+         project_domain_name: "{{ project_domain_name }}"
+         user_domain_name: "{{ user_domain_name }}"
+      state: present
+      name: testnet2
+      external: False
+      shared: False
+      wait: yes
+    register: testnet_network
+
+  - name: Create the test subnet
+    os_subnet:
+      auth:
+         auth_url: "{{ os_auth }}"
+         username: "{{ cloud_admin }}"
+         password: "{{ admin_password }}"
+         project_name: "{{ demo_project }}"
+         project_domain_name: "{{ project_domain_name }}"
+         user_domain_name: "{{ user_domain_name }}"
+      state: present
+      network_name: "{{ testnet_network.id }}"
+      name: testnet_sub
+      ip_version: 4
+      cidr: 192.168.2.0/24
+      gateway_ip: 192.168.2.1
+      enable_dhcp: yes
+      dns_nameservers:
+        - 8.8.8.8
+    register: testnet_sub
+
+  - name: Create test port
+    os_port:
+      auth:
+        auth_url: "{{ os_auth }}"
+        username: "{{ cloud_admin }}"
+        password: "{{ admin_password }}"
+        project_name: "{{ demo_project }}"
+        project_domain_name: "{{ project_domain_name }}"
+        user_domain_name: "{{ user_domain_name }}"
+      state: present
+      name: "{{ test_port }}"
+      network: "{{ testnet_network.id }}"
+      # network: testnet
+      security_groups: "{{ sec_group }}"
+    register: testport_port
+
+  - name: Attach existed instance to new network
+    os_server:
+    auth:
+       auth_url: "{{ os_auth }}"
+       username: "{{ cloud_admin }}"
+       password: "{{ admin_password }}"
+       project_name: "{{ demo_project }}"
+       project_domain_name: "{{ project_domain_name }}"
+       user_domain_name: "{{ user_domain_name }}"
+    state: present
+    name: testServer
+    nics:
+      # - net-id: "{{ testnet_network.id }}"
+      #- net-id: a39b8f6c-cba2-493e-a777-eed61cabf70a
+      - port-id: "{{ testport_port.id }}"
+    auto_ip: yes
+  register: testServer
