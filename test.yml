@@ -55,7 +55,7 @@
       enable_snat: yes
       state: present
       name: testnet_router
-      network: external
+      network: "{{ ext_net }}"
       interfaces:
         - testnet_sub
 
@@ -94,7 +94,6 @@
   #     port_range_max: 22
   #     remote_ip_prefix: 0.0.0.0/0
 
-
   - name: Create server instance
     os_server:
       auth:
@@ -105,7 +104,7 @@
          project_domain_name: "{{ project_domain_name }}"
          user_domain_name: "{{ user_domain_name }}"
       state: present
-      name: testServer
+      name: "{{ test_server }}"
       image: rhel7_ocp
       flavor: medium
       security_groups: default
