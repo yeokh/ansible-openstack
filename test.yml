@@ -114,6 +114,32 @@
         #- net-id: a39b8f6c-cba2-493e-a777-eed61cabf70a
         - port-id: "{{ testport_port.id }}"
       auto_ip: yes
+      userdata: |
+        #cloud-config
+        user: demouser
+        password: demouser
+        chpasswd: {expire: False}
+
+        runcmd:
+         - tee -a /usr/local/bin/mhatds.sh <<< "#!/bin/bash"
+         - tee -a /usr/local/bin/mhatds.sh <<< "echo 'This is a sample script to test auto run during boot' >> /var/log/script.out"
+         - tee -a /usr/local/bin/mhatds.sh <<< "echo 'The time the script run was -->  `date`' >> /var/log/script.out"
+         - chmod +x /usr/local/bin/mhatds.sh
+
+         - tee -a /etc/systemd/system/mhatds.service <<< "[Unit]"
+         - tee -a /etc/systemd/system/mhatds.service <<< "Description=Description for sample script goes here"
+         - tee -a /etc/systemd/system/mhatds.service <<< "After=network.target"
+         - tee -a /etc/systemd/system/mhatds.service <<< "[Service]"
+         - tee -a /etc/systemd/system/mhatds.service <<< "Type=idle"
+         - tee -a /etc/systemd/system/mhatds.service <<< "ExecStart=/usr/local/bin/mhatds.sh"
+         - tee -a /etc/systemd/system/mhatds.service <<< "TimeoutStartSec=0"
+         - tee -a /etc/systemd/system/mhatds.service <<< "[Install]"
+         - tee -a /etc/systemd/system/mhatds.service <<< "WantedBy=multi-user.target"
+
+         - systemctl daemon-reload
+         - systemctl enable mhatds.service
+         - systemctl start mhatds.service
+         - shutdown -r
     register: testServer
 
   - name: Show Server's IP
