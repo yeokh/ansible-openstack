@@ -8,7 +8,7 @@
     # Overcloud public keystone endpoint. Can be typically found inside overcloudrc file
     os_auth: http://172.17.5.250:5000//v3
     # Demo project
-    demo_project: Tuan-fun
+    demo_project: mha-demo
     # Overcloud domains
     project_domain_name: Default
     user_domain_name: Default
@@ -21,7 +21,7 @@
     # Test port
     test_port: testport
     # Test server
-    test_server: testServer
+    test_server: mha-tds
     # External net
     ext_net: external
     # Computing URL

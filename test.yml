@@ -42,7 +42,7 @@
     register: testnet_sub
 
   - name: Create the test router
-    ignore_errors: yes #for some reasons, re-running this task gives errors
+    ignore_errors: yes
     os_router:
       auth:
          auth_url: "{{ os_auth }}"
@@ -75,25 +75,6 @@
       security_groups: "{{ sec_group }}"
     register: testport_port
 
-  # - name: Create a new security group
-  #   os_security_group:
-  #     state: present
-  #     name: secgr
-  
-  # - name: Create a new security group allowing any ICMP
-  #   os_security_group_rule:
-  #     security_group: secgr
-  #     protocol: icmp
-  #     remote_ip_prefix: 0.0.0.0/0
-
-  # - name: Create a new security group allowing any SSH connection
-  #   os_security_group_rule:
-  #     security_group: secgr
-  #     protocol: tcp
-  #     port_range_min: 22
-  #     port_range_max: 22
-  #     remote_ip_prefix: 0.0.0.0/0
-
   - name: Create server instance
     os_server:
       auth:
@@ -105,10 +86,10 @@
          user_domain_name: "{{ user_domain_name }}"
       state: present
       name: "{{ test_server }}"
-      image: rhel7_ocp
-      flavor: medium
+      image: CentOS-7-x86_64-GenericCloud
+      flavor: small
       security_groups: default
-      key_name: key1
+      key_name: mhatds
       nics:
         # - net-id: "{{ testnet_network.id }}"
         #- net-id: a39b8f6c-cba2-493e-a777-eed61cabf70a
@@ -116,14 +97,114 @@
       auto_ip: yes
       userdata: |
         #cloud-config
-        user: demouser
-        password: demouser
+
+        user: tds2019
+        password: tds2019
         chpasswd: {expire: False}
 
+        # Send pre-generated ssh private keys to the server (be sure to attach the
+        # right corresponding key to the VM.
+        ssh_keys:
+          rsa_private: |
+            -----BEGIN RSA PRIVATE KEY-----
+            MIIEowIBAAKCAQEAtwghH/eFj+5oN7zTQPWC/xjkV+iUAI9VH6SnY/YtPdW0vZWG
+            0/W+YiaBsZZy93GWlhqD8wesiw3IOCwPU6iWV1iFuxGsb7id+aW3dArKqAdnoEtr
+            zsD60kVQgMTI4kF8CoivY8fzxcaRqZknJCT0tsRRvCZ7qE4m0nFplzSmJqlNHiEC
+            9Vs/qV40oqTMIHNy6Eq07iX0MZ+BAgzjJbQaAK5OFiR1w8cUkhjqSGc+0JYinsEt
+            POgedbFxRCevvtWnr/RFcBze+osBYZLDgdPOceVMrxjItrZViXTjkNIyzU059wZd
+            rVuMSeTKK2DtTmhdSlZ6NqyPgqcnQathu6a6mwIDAQABAoIBAAIFoPgNb/hLFfOn
+            rl3FWJEg4UTnWNs4uiQDWaYNDirktX5yrG6jBFtpOX2Qv+xj4Nn/qP2CVDGlEVUt
+            h23RKvgEDlYmt9T0ISqk3gX2KI76pfZrXuGF2D+CbIU/p0h4mLo1EFr11oeUzf8l
+            pf0MO3fZa128vxj45AznG9eDyWIb7+moYtjlfQ2snTsphXd5Qm01UF2l/JP/ksc9
+            sQdrS2nECSsZLMoQRZoa5R+biqDmTeBnYI236YrbBgZN9FpSdBM3Od0SsMXzaJAg
+            h7HeFV3muDP7uq+1DnxObvIsdZT59whbhHGqS8TZQn96BHSRHVabe03VxqqWXdp6
+            hp5kuqECgYEA27auSleXl1+W6lClb0kprm2ODhBcw6MglwOtf3pUz0pQVq9+S9YW
+            uGuxhOvUWBiNkqULuLfQzEGYpC/FVjOI6t6PodgNoQHvY7OYCQT71Hxs2PktILlx
+            CRbGhSI3yqHS1rpWL8VMu84HqaJKdXtceaX/ZE2mzTSEvp+4a+BVBu0CgYEA1UKR
+            qJrRHI/oNS8UWxMkUnUr1H4xEL0dwWV0gmSKIrw4J8unniz1yDczVlVEUg362fqu
+            C3gydJV86OW3r7j7RWvOVbK8jlz2qSikg+Tgu7tzdv99zmBd+1jlyx+b6F6OL3+t
+            ETN2+GN0sfRlslBeqcBWaORlwi09IDN+mC7/TqcCgYEAgmw7o8fBJctJc4gx3BCr
+            HG7OD40o870G4H3/ZJfCdlZfwEVmjC/mxsyu0P+Iyk6w42bzwU/kMwuRR41P7+6h
+            jQJWcrUkyfmzGBUI3/nEX4sItfecETvjXIjXiToZskBDPtHXzX2qIiWYKNs8peZ3
+            q4KdSvZJWLCfR+TZ/bdp4bUCgYAp7NBd6TG6/7+S1RKXZQf6/fYD7FsRA1zaLGvf
+            Royxj3cqu6rUOdqH5fI9wr2PtBfgypt0vciNiuXnk2GtNhyP5UXHK0BObJBBaTAO
+            jexwe8WTW18MN33CcBOc/zXTVON3Cw6nFwsIgeTrJzTm/U3e6WUTcfNfXS1rKzR0
+            Dqk6eQKBgFgrFOGoxonZMMkOdPa0/Zb3ZsbJZnM3NKsOA4JaHBWq4+XUYwU8k2u1
+            WJ0MFLFW8RuSyGTMjsRv86ezAi77OXqI5HHTRckU+PWfHYUwNZVmY5Pc8mGNKqkK
+            5xGxj7CNK/3MG1ekPiuZdXzZJFO8/rWER0jtrnR4htYgkomvmyb+
+            -----END RSA PRIVATE KEY-----
+
         runcmd:
+
+         - sed -i 's/HWADDR/##HWADDR/g' /etc/sysconfig/network-scripts/ifcfg-eth0
+         - sed -i 's/GSSAPIAuthentication yes/GSSAPIAuthentication no/g' /etc/ssh/ssh_config
+         - sed -i 's/GSSAPIAuthentication yes/GSSAPIAuthentication no/g' /etc/ssh/sshd_config
+         - tee -a /etc/ssh/ssh_config <<< "        StrictHostKeyChecking no"
+         - systemctl restart sshd
+
+         - echo 'get /home/tds2019/source.dta /home/tds2019/mhatds.dta' >> /home/tds2019/getdata
+         - echo 'put /home/tds2019/mhatds.dta /home/tds2019/target.dta' >> /home/tds2019/putdata
+
+         - tee -a /usr/local/bin/runstep1.sh <<< "#!/bin/bash"
+         - tee -a /usr/local/bin/runstep1.sh <<< "echo '************ Processing step 1 ************' >> /var/log/mhatds.log"
+         - tee -a /usr/local/bin/runstep1.sh <<< 'echo "Processing step 1 on $(date)" >> /var/log/mhatds.log'
+         - tee -a /usr/local/bin/runstep1.sh <<< "sleep 5"
+         - tee -a /usr/local/bin/runstep1.sh <<< 'sftp -i /etc/ssh/ssh_host_rsa_key -b /home/tds2019/getdata tds2019@192.168.1.5'
+         - tee -a /usr/local/bin/runstep1.sh <<< 'ssh -i /etc/ssh/ssh_host_rsa_key tds2019@192.168.1.5 "touch runstep1.txt"'
+         - tee -a /usr/local/bin/runstep1.sh <<< 'echo "Step 1 processes completed on $(date)" >> /home/tds2019/runstep1.log'
+         - tee -a /usr/local/bin/runstep1.sh <<< "sleep 20"
+         - tee -a /usr/local/bin/runstep1.sh <<< "reboot"
+         - chmod +x /usr/local/bin/runstep1.sh
+
+         - tee -a /usr/local/bin/runstep2.sh <<< "#!/bin/bash"
+         - tee -a /usr/local/bin/runstep2.sh <<< "echo '************ Processing step 2 ************' >> /var/log/mhatds.log"
+         - tee -a /usr/local/bin/runstep2.sh <<< 'echo "Processing step 2 on $(date)" >> /var/log/mhatds.log'
+         - tee -a /usr/local/bin/runstep2.sh <<< "sleep 20"
+         - tee -a /usr/local/bin/runstep2.sh <<< 'pingcount=$(ping -c 3 192.168.2.20 | grep ttl | wc -l)'
+         - tee -a /usr/local/bin/runstep2.sh <<< 'while [ $pingcount -eq "0" ]; do'
+         - tee -a /usr/local/bin/runstep2.sh <<< "  sleep 10"
+         - tee -a /usr/local/bin/runstep2.sh <<< '  pingcount=$(ping -c 3 192.168.2.20 | grep ttl | wc -l)'
+         - tee -a /usr/local/bin/runstep2.sh <<< "done"
+         - tee -a /usr/local/bin/runstep2.sh <<< 'sftp -i /etc/ssh/ssh_host_rsa_key -b /home/tds2019/putdata tds2019@192.168.2.20' 
+         - tee -a /usr/local/bin/runstep2.sh <<< 'ssh -i /etc/ssh/ssh_host_rsa_key tds2019@192.168.2.20 "touch runstep2.txt"'
+         - tee -a /usr/local/bin/runstep2.sh <<< 'echo "Step 2 processes completed on $(date)" >> /home/tds2019/runstep2.log'
+         - tee -a /usr/local/bin/runstep2.sh <<< "sleep 20"
+         - tee -a /usr/local/bin/runstep2.sh <<< "reboot"
+         - chmod +x /usr/local/bin/runstep2.sh
+
+         - tee -a /usr/local/bin/runstep3.sh <<< "#!/bin/bash"
+         - tee -a /usr/local/bin/runstep3.sh <<< "echo '************ Processing step 3 ************' >> /var/log/mhatds.log"
+         - tee -a /usr/local/bin/runstep3.sh <<< 'echo "Processing step 3 on $(date)" >> /var/log/mhatds.log'
+         - tee -a /usr/local/bin/runstep3.sh <<< "sleep 5"
+         - tee -a /usr/local/bin/runstep3.sh <<< 'echo "Step 3 processes completed on $(date)" >> /home/tds2019/runstep3.log'
+         - tee -a /usr/local/bin/runstep3.sh <<< "sleep 20"
+         - tee -a /usr/local/bin/runstep3.sh <<< "shutdown"
+         - chmod +x /usr/local/bin/runstep3.sh
+
          - tee -a /usr/local/bin/mhatds.sh <<< "#!/bin/bash"
-         - tee -a /usr/local/bin/mhatds.sh <<< "echo 'This is a sample script to test auto run during boot' >> /var/log/script.out"
-         - tee -a /usr/local/bin/mhatds.sh <<< "echo 'The time the script run was -->  `date`' >> /var/log/script.out"
+         - tee -a /usr/local/bin/mhatds.sh <<< 'echo "MHA TDS Controller Service --> $(date)" >> /var/log/mhatds.log'
+         - tee -a /usr/local/bin/mhatds.sh <<< "while true"
+         - tee -a /usr/local/bin/mhatds.sh <<< "do"
+         - tee -a /usr/local/bin/mhatds.sh <<< " echo 'Checking for TDS services to run...' >> /var/log/mhatds.log"
+         - tee -a /usr/local/bin/mhatds.sh <<< " if [ ! -f '/home/tds2019/runstep1.log' ]"
+         - tee -a /usr/local/bin/mhatds.sh <<< " then"
+         - tee -a /usr/local/bin/mhatds.sh <<< "  echo 'Running Step 1...' >> /var/log/mhatds.log"
+         - tee -a /usr/local/bin/mhatds.sh <<< "  /usr/local/bin/runstep1.sh"
+         - tee -a /usr/local/bin/mhatds.sh <<< " else"
+         - tee -a /usr/local/bin/mhatds.sh <<< "  if [ ! -f '/home/tds2019/runstep2.log' ]"
+         - tee -a /usr/local/bin/mhatds.sh <<< "  then"
+         - tee -a /usr/local/bin/mhatds.sh <<< "   echo 'Running Step 2...' >> /var/log/mhatds.log"
+         - tee -a /usr/local/bin/mhatds.sh <<< "   /usr/local/bin/runstep2.sh"
+         - tee -a /usr/local/bin/mhatds.sh <<< "  else"
+         - tee -a /usr/local/bin/mhatds.sh <<< "   if [ ! -f '/home/tds2019/runstep3.log' ]"
+         - tee -a /usr/local/bin/mhatds.sh <<< "   then"
+         - tee -a /usr/local/bin/mhatds.sh <<< "    echo 'Running Step 3...' >> /var/log/mhatds.log"
+         - tee -a /usr/local/bin/mhatds.sh <<< "    /usr/local/bin/runstep3.sh"
+         - tee -a /usr/local/bin/mhatds.sh <<< "   fi"
+         - tee -a /usr/local/bin/mhatds.sh <<< "  fi"
+         - tee -a /usr/local/bin/mhatds.sh <<< " fi"
+         - tee -a /usr/local/bin/mhatds.sh <<< " sleep 60"
+         - tee -a /usr/local/bin/mhatds.sh <<< "done"
          - chmod +x /usr/local/bin/mhatds.sh
 
          - tee -a /etc/systemd/system/mhatds.service <<< "[Unit]"
@@ -135,11 +216,9 @@
          - tee -a /etc/systemd/system/mhatds.service <<< "TimeoutStartSec=0"
          - tee -a /etc/systemd/system/mhatds.service <<< "[Install]"
          - tee -a /etc/systemd/system/mhatds.service <<< "WantedBy=multi-user.target"
-
          - systemctl daemon-reload
          - systemctl enable mhatds.service
          - systemctl start mhatds.service
-         - shutdown -r
     register: testServer
 
   - name: Show Server's IP
