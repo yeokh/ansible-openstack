@@ -191,7 +191,7 @@
          - tee -a /usr/local/bin/runstep3.sh <<< 'echo "Processing step 3 on $(date)" >> /var/log/mhatds.log'
          - tee -a /usr/local/bin/runstep3.sh <<< 'sleep 10'
          - tee -a /usr/local/bin/runstep3.sh <<< 'echo "Step 3 processes completed on $(date)" >> /home/tds2019/runstep3.log'
-         - tee -a /usr/local/bin/runstep3.sh <<< 'sleep 10'
+         - tee -a /usr/local/bin/runstep3.sh <<< 'shutdown'
          - chmod +x /usr/local/bin/runstep3.sh
 
          - tee -a /usr/local/bin/mhatds.sh <<< "#!/bin/bash"
