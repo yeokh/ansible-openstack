@@ -142,43 +142,56 @@
          - tee -a /etc/ssh/ssh_config <<< "        StrictHostKeyChecking no"
          - systemctl restart sshd
 
-         - echo 'get /home/tds2019/source.dta /home/tds2019/mhatds.dta' >> /home/tds2019/getdata
-         - echo 'put /home/tds2019/mhatds.dta /home/tds2019/target.dta' >> /home/tds2019/putdata
+         - echo 'get /home/tds2019/source.dta /home/tds2019/mhatds.dta' >> /home/tds2019/getdata1
+         - echo 'get -r /home/tds2019/srcfiles /home/tds2019' >> /home/tds2019/getdata2
+         - echo 'put /home/tds2019/mhatds.dta /home/tds2019/target.dta' >> /home/tds2019/putdata1
+         - echo 'put -r /home/tds2019/tgtfiles /home/tds2019' >> /home/tds2019/putdata2
 
-         - tee -a /usr/local/bin/runstep1.sh <<< "#!/bin/bash"
-         - tee -a /usr/local/bin/runstep1.sh <<< "echo '************ Processing step 1 ************' >> /var/log/mhatds.log"
+         - tee -a /usr/local/bin/runstep1.sh <<< '#!/bin/bash'
+         - tee -a /usr/local/bin/runstep1.sh <<< 'echo "************ Processing step 1 ************" >> /var/log/mhatds.log'
          - tee -a /usr/local/bin/runstep1.sh <<< 'echo "Processing step 1 on $(date)" >> /var/log/mhatds.log'
-         - tee -a /usr/local/bin/runstep1.sh <<< "sleep 5"
-         - tee -a /usr/local/bin/runstep1.sh <<< 'sftp -i /etc/ssh/ssh_host_rsa_key -b /home/tds2019/getdata tds2019@192.168.1.5'
-         - tee -a /usr/local/bin/runstep1.sh <<< 'ssh -i /etc/ssh/ssh_host_rsa_key tds2019@192.168.1.5 "touch runstep1.txt"'
-         - tee -a /usr/local/bin/runstep1.sh <<< 'echo "Step 1 processes completed on $(date)" >> /home/tds2019/runstep1.log'
-         - tee -a /usr/local/bin/runstep1.sh <<< "sleep 20"
-         - tee -a /usr/local/bin/runstep1.sh <<< "reboot"
+         - tee -a /usr/local/bin/runstep1.sh <<< 'sleep 10'
+         - tee -a /usr/local/bin/runstep1.sh <<< 'pingcount=$(ping -c 3 192.168.1.9 | grep ttl | wc -l)'
+         - tee -a /usr/local/bin/runstep1.sh <<< 'if [ $pingcount != "3" ]'
+         - tee -a /usr/local/bin/runstep1.sh <<< 'then'
+         - tee -a /usr/local/bin/runstep1.sh <<< ' sleep 30'
+         - tee -a /usr/local/bin/runstep1.sh <<< ' reboot'
+         - tee -a /usr/local/bin/runstep1.sh <<< 'else'
+         - tee -a /usr/local/bin/runstep1.sh <<< ' sftp -i /etc/ssh/ssh_host_rsa_key -b /home/tds2019/getdata1 tds2019@192.168.1.9'
+         - tee -a /usr/local/bin/runstep1.sh <<< ' sftp -i /etc/ssh/ssh_host_rsa_key -b /home/tds2019/getdata2 tds2019@192.168.1.9'
+         - tee -a /usr/local/bin/runstep1.sh <<< ' ssh -i /etc/ssh/ssh_host_rsa_key tds2019@192.168.1.9 "touch runstep1.txt"'
+         - tee -a /usr/local/bin/runstep1.sh <<< ' mv /home/tds2019/srcfiles /home/tds2019/tgtfiles'
+         - tee -a /usr/local/bin/runstep1.sh <<< ' echo "Step 1 processes completed on $(date)" >> /home/tds2019/runstep1.log'
+         - tee -a /usr/local/bin/runstep1.sh <<< ' sleep 10'
+         - tee -a /usr/local/bin/runstep1.sh <<< ' reboot'
+         - tee -a /usr/local/bin/runstep1.sh <<< 'fi'
          - chmod +x /usr/local/bin/runstep1.sh
 
-         - tee -a /usr/local/bin/runstep2.sh <<< "#!/bin/bash"
-         - tee -a /usr/local/bin/runstep2.sh <<< "echo '************ Processing step 2 ************' >> /var/log/mhatds.log"
+         - tee -a /usr/local/bin/runstep2.sh <<< '#!/bin/bash'
+         - tee -a /usr/local/bin/runstep2.sh <<< 'echo "************ Processing step 2 ************" >> /var/log/mhatds.log'
          - tee -a /usr/local/bin/runstep2.sh <<< 'echo "Processing step 2 on $(date)" >> /var/log/mhatds.log'
-         - tee -a /usr/local/bin/runstep2.sh <<< "sleep 20"
-         - tee -a /usr/local/bin/runstep2.sh <<< 'pingcount=$(ping -c 3 192.168.2.20 | grep ttl | wc -l)'
-         - tee -a /usr/local/bin/runstep2.sh <<< 'while [ $pingcount -eq "0" ]; do'
-         - tee -a /usr/local/bin/runstep2.sh <<< "  sleep 10"
-         - tee -a /usr/local/bin/runstep2.sh <<< '  pingcount=$(ping -c 3 192.168.2.20 | grep ttl | wc -l)'
-         - tee -a /usr/local/bin/runstep2.sh <<< "done"
-         - tee -a /usr/local/bin/runstep2.sh <<< 'sftp -i /etc/ssh/ssh_host_rsa_key -b /home/tds2019/putdata tds2019@192.168.2.20' 
-         - tee -a /usr/local/bin/runstep2.sh <<< 'ssh -i /etc/ssh/ssh_host_rsa_key tds2019@192.168.2.20 "touch runstep2.txt"'
-         - tee -a /usr/local/bin/runstep2.sh <<< 'echo "Step 2 processes completed on $(date)" >> /home/tds2019/runstep2.log'
-         - tee -a /usr/local/bin/runstep2.sh <<< "sleep 20"
-         - tee -a /usr/local/bin/runstep2.sh <<< "reboot"
+         - tee -a /usr/local/bin/runstep2.sh <<< 'sleep 10'
+         - tee -a /usr/local/bin/runstep2.sh <<< 'pingcount=$(ping -c 3 192.168.2.14 | grep ttl | wc -l)'
+         - tee -a /usr/local/bin/runstep2.sh <<< 'if [ $pingcount != "3" ]'
+         - tee -a /usr/local/bin/runstep2.sh <<< 'then'
+         - tee -a /usr/local/bin/runstep2.sh <<< ' sleep 30'
+         - tee -a /usr/local/bin/runstep2.sh <<< ' reboot'
+         - tee -a /usr/local/bin/runstep2.sh <<< 'else'
+         - tee -a /usr/local/bin/runstep2.sh <<< ' sftp -i /etc/ssh/ssh_host_rsa_key -b /home/tds2019/putdata1 tds2019@192.168.2.14' 
+         - tee -a /usr/local/bin/runstep2.sh <<< ' sftp -i /etc/ssh/ssh_host_rsa_key -b /home/tds2019/putdata2 tds2019@192.168.2.14' 
+         - tee -a /usr/local/bin/runstep2.sh <<< ' ssh -i /etc/ssh/ssh_host_rsa_key tds2019@192.168.2.14 "touch runstep2.txt"'
+         - tee -a /usr/local/bin/runstep2.sh <<< ' echo "Step 2 processes completed on $(date)" >> /home/tds2019/runstep2.log'
+         - tee -a /usr/local/bin/runstep2.sh <<< ' sleep 10'
+         - tee -a /usr/local/bin/runstep2.sh <<< ' reboot'
+         - tee -a /usr/local/bin/runstep2.sh <<< 'fi'
          - chmod +x /usr/local/bin/runstep2.sh
 
-         - tee -a /usr/local/bin/runstep3.sh <<< "#!/bin/bash"
-         - tee -a /usr/local/bin/runstep3.sh <<< "echo '************ Processing step 3 ************' >> /var/log/mhatds.log"
+         - tee -a /usr/local/bin/runstep3.sh <<< '#!/bin/bash'
+         - tee -a /usr/local/bin/runstep3.sh <<< 'echo "************ Processing step 3 ************" >> /var/log/mhatds.log'
          - tee -a /usr/local/bin/runstep3.sh <<< 'echo "Processing step 3 on $(date)" >> /var/log/mhatds.log'
-         - tee -a /usr/local/bin/runstep3.sh <<< "sleep 5"
+         - tee -a /usr/local/bin/runstep3.sh <<< 'sleep 10'
          - tee -a /usr/local/bin/runstep3.sh <<< 'echo "Step 3 processes completed on $(date)" >> /home/tds2019/runstep3.log'
-         - tee -a /usr/local/bin/runstep3.sh <<< "sleep 20"
-         - tee -a /usr/local/bin/runstep3.sh <<< "shutdown"
+         - tee -a /usr/local/bin/runstep3.sh <<< 'sleep 10'
          - chmod +x /usr/local/bin/runstep3.sh
 
          - tee -a /usr/local/bin/mhatds.sh <<< "#!/bin/bash"
