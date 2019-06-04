@@ -1,0 +1,127 @@
+---
+
+- name: Execute the Ansible Openstack demo-scenario3 tasks
+  hosts: localhost
+  vars_files:
+    - vars/install-vars.yml
+  tasks:
+  - name: Delete test port
+    os_port:
+      auth:
+        auth_url: "{{ os_auth }}"
+        username: "{{ cloud_admin }}"
+        password: "{{ admin_password }}"
+        project_name: "{{ demo_project }}"
+        project_domain_name: "{{ project_domain_name }}"
+        user_domain_name: "{{ user_domain_name }}"
+      state: absent
+      name: "{{ test_port }}"
+
+  - name: Get token of a project
+    uri:
+      url: "{{ os_auth }}/auth/tokens"
+      method: POST
+      body_format: json
+      body: '
+        { "auth": {
+            "identity": {
+              "methods": ["password"],
+              "password": {
+                "user": {
+                  "domain": {
+                    "id": "default"
+                  },
+                  "name": "{{ cloud_admin }}",
+                  "password": "{{ admin_password }}"
+                }
+              }
+            },
+            "scope": {
+              "project": {
+                "domain": {
+                  "id": "default"
+                },
+                "name": "{{ demo_project }}"
+              }
+            }
+          }
+        }'
+      status_code: 201
+      HEADER_Content-Type: "application/json"
+    register: token_response
+
+  - name: Get ID of test router
+    ignore_errors: yes
+    os_router:
+      auth:
+         auth_url: "{{ os_auth }}"
+         username: "{{ cloud_admin }}"
+         password: "{{ admin_password }}"
+         project_name: "{{ demo_project }}"
+         project_domain_name: "{{ project_domain_name }}"
+         user_domain_name: "{{ user_domain_name }}"
+      region_name: "{{ region_name }}"
+      enable_snat: yes
+      state: present
+      name: testnet_router
+      network: "{{ ext_net }}"
+    register: testnet_router
+
+  - name: "Set OpenStack Neutron URL"
+    set_fact:
+      osp_neutron_url: "{{ neutron_url }}/v2.0/routers/{{ testnet_router.id }}/add_router_interface"
+
+  - name: Attach a subnet to a server
+    uri:
+      url: "{{ osp_neutron_url }}"
+      method: PUT
+      status_code: 200
+      HEADER_X-Auth-Token: "{{ token_response.x_subject_token }}"
+      body_format: json
+      body: '
+          {
+            "subnet_id": "{{ testnet_sub.id }}"
+          }
+          '
+  - name: Get server facts
+    os_server_facts:
+      auth:
+        auth_url: "{{ os_auth }}"
+        username: "{{ cloud_admin }}"
+        password: "{{ admin_password }}"
+        project_name: "{{ demo_project }}"
+        project_domain_name: "{{ project_domain_name }}"
+        user_domain_name: "{{ user_domain_name }}"
+      server: "{{ test_server }}"
+
+  - name: "Set OpenStack Nova URL"
+    set_fact:
+      osp_nova_url: "{{ nova_url }}/servers/{{ openstack_servers[0].id }}/os-interface"
+
+  - name: Attach a port to a server
+    uri:
+      url: "{{ osp_nova_url }}"
+      method: POST
+      status_code: 200
+      HEADER_X-Auth-Token: "{{ token_response.x_subject_token }}"
+      body_format: json
+      body: '
+        { "interfaceAttachment": {
+            "port_id": "{{ testport_port.id }}"
+          }
+      }'
+
+  - name: Get server facts
+    os_server_facts:
+      auth:
+        auth_url: "{{ os_auth }}"
+        username: "{{ cloud_admin }}"
+        password: "{{ admin_password }}"
+        project_name: "{{ demo_project }}"
+        project_domain_name: "{{ project_domain_name }}"
+        user_domain_name: "{{ user_domain_name }}"
+      server: "{{ test_server }}"
+
+  - name: Show test server floating IP
+    debug: 
+      var: openstack_servers[0].public_v4
