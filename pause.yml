@@ -1,0 +1,8 @@
+---
+
+- name: Pause before next run step
+  hosts: localhost
+  tasks:
+  - name: Pause 3 minutes
+    pause:
+      minutes: 3
