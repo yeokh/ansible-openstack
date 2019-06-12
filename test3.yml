@@ -5,10 +5,6 @@
   vars_files:
     - vars/install-vars.yml
   tasks:
-  - name: Run Step 3, pause for 3 minutes before detaching from target network.
-    pause:
-      minutes: 3  
-  
   - name: Delete test port
     os_port:
       auth:
